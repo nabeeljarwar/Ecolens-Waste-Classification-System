@@ -1,0 +1,11 @@
+# Dependencies
+**/node_modules/
+**/dist/
+**/.env
+
+# Local system files
+.DS_Store
+Thumbs.db
+
+# Large files (optional)
+# Agar AI_MODEL mein koi boht bari raw data file hai to use yahan add karein

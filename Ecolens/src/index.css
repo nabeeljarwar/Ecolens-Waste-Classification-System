@@ -1,0 +1,164 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 140 20% 97%;
+    --foreground: 150 40% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 150 40% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 150 40% 12%;
+
+    --primary: 140 55% 35%;
+    --primary-foreground: 140 20% 98%;
+
+    --secondary: 150 40% 94%;
+    --secondary-foreground: 150 40% 20%;
+
+    --muted: 140 15% 92%;
+    --muted-foreground: 150 15% 45%;
+
+    --accent: 160 60% 45%;
+    --accent-foreground: 160 60% 98%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 140 20% 88%;
+    --input: 140 20% 88%;
+    --ring: 140 55% 35%;
+
+    --radius: 1rem;
+
+    /* EcoLens Custom Tokens */
+    --eco-forest: 140 55% 35%;
+    --eco-forest-dark: 140 60% 25%;
+    --eco-mint: 150 45% 96%;
+    --eco-mint-accent: 160 50% 88%;
+    --eco-leaf: 120 45% 50%;
+    --eco-ocean: 200 70% 50%;
+    --eco-earth: 30 40% 45%;
+    
+    /* Glassmorphism */
+    --glass-bg: 0 0% 100% / 0.7;
+    --glass-border: 0 0% 100% / 0.3;
+    --glass-blur: 16px;
+    
+    /* Shadows */
+    --shadow-soft: 0 4px 24px -4px hsl(140 30% 20% / 0.12);
+    --shadow-glow: 0 0 40px -8px hsl(140 55% 35% / 0.3);
+    --shadow-card: 0 8px 32px -8px hsl(140 30% 20% / 0.15);
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 150 25% 8%;
+    --foreground: 140 20% 95%;
+
+    --card: 150 20% 12%;
+    --card-foreground: 140 20% 95%;
+
+    --popover: 150 20% 12%;
+    --popover-foreground: 140 20% 95%;
+
+    --primary: 140 50% 45%;
+    --primary-foreground: 150 40% 8%;
+
+    --secondary: 150 20% 18%;
+    --secondary-foreground: 140 20% 90%;
+
+    --muted: 150 15% 20%;
+    --muted-foreground: 140 15% 60%;
+
+    --accent: 160 55% 40%;
+    --accent-foreground: 160 60% 98%;
+
+    --destructive: 0 70% 45%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 150 15% 20%;
+    --input: 150 15% 20%;
+    --ring: 140 50% 45%;
+
+    --eco-forest: 140 50% 45%;
+    --eco-forest-dark: 140 55% 35%;
+    --eco-mint: 150 30% 15%;
+    --eco-mint-accent: 160 40% 20%;
+
+    --glass-bg: 150 20% 12% / 0.8;
+    --glass-border: 150 20% 30% / 0.3;
+
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-white/70 backdrop-blur-xl border border-white/30 shadow-lg;
+  }
+
+  .eco-gradient {
+    background: linear-gradient(135deg, hsl(var(--eco-forest)) 0%, hsl(var(--eco-leaf)) 100%);
+  }
+
+  .eco-gradient-soft {
+    background: linear-gradient(180deg, hsl(var(--eco-mint)) 0%, hsl(var(--background)) 100%);
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+    background: linear-gradient(135deg, hsl(var(--eco-forest)) 0%, hsl(var(--eco-leaf)) 100%);
+  }
+}
+
+@layer utilities {
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+
+  .animate-pulse-soft {
+    animation: pulse-soft 3s ease-in-out infinite;
+  }
+
+  @keyframes pulse-soft {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+}
