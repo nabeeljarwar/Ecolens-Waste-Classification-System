@@ -1,6 +1,7 @@
+import { useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, MapPin, Home as HomeIcon, FileText, Info } from "lucide-react";
+import { ArrowLeft, MapPin, Home as HomeIcon, FileText, Info, Navigation, Loader2 } from "lucide-react";
 import { WasteAnimation } from "@/components/WasteAnimation";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,22 +11,34 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { ClassificationResult, getWasteInfo } from "@/services/classificationService";
+import { useGeolocation, calculateDistance } from "@/hooks/useGeolocation";
+import { muetBinLocations } from "@/data/muetLocations";
 
 const ScanResult = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { latitude, longitude, error: geoError, loading: geoLoading } = useGeolocation();
   const classification = location.state?.classification as ClassificationResult | undefined;
 
   // Fallback if navigated directly
   const info = classification || getWasteInfo("recyclable");
   const confidence = classification?.confidence || 0.85;
 
-  const nearbyBins = [
-    { name: "Green Park Collection Center", distance: "0.3 km", type: "All types" },
-    { name: "Mall Entrance Bin", distance: "0.5 km", type: info.binLabel },
-    { name: "Community Recycling Hub", distance: "0.8 km", type: "All types" },
-    { name: "Municipal Drop-off Point", distance: "1.2 km", type: info.binLabel },
-  ];
+  const nearbyBins = useMemo(() => {
+    return muetBinLocations
+      .map((loc) => {
+        const type = loc.binTypes === "dynamic" ? info.binLabel : loc.binTypes;
+        let distance: string;
+        if (latitude !== null && longitude !== null) {
+          const dist = calculateDistance(latitude, longitude, loc.latitude, loc.longitude);
+          distance = dist < 1 ? `${Math.round(dist * 1000)} m` : `${dist.toFixed(1)} km`;
+        } else {
+          distance = "—";
+        }
+        return { name: loc.name, distance, type, rawDist: latitude !== null && longitude !== null ? calculateDistance(latitude, longitude, loc.latitude, loc.longitude) : Infinity };
+      })
+      .sort((a, b) => a.rawDist - b.rawDist);
+  }, [latitude, longitude, info.binLabel]);
 
   return (
     <div className="min-h-screen bg-background pb-8">
@@ -136,6 +149,17 @@ const ScanResult = () => {
                 </div>
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
+                {geoLoading && (
+                  <div className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Getting your location...
+                  </div>
+                )}
+                {geoError && (
+                  <div className="mb-3 rounded-lg bg-destructive/10 p-2 text-xs text-destructive">
+                    📍 Location access denied. Distances unavailable. Please enable location in browser settings.
+                  </div>
+                )}
                 <div className="space-y-3">
                   {nearbyBins.map((bin, index) => (
                     <div key={index} className="flex items-center justify-between rounded-xl bg-muted/50 p-3">
@@ -143,7 +167,10 @@ const ScanResult = () => {
                         <p className="text-sm font-medium text-foreground">{bin.name}</p>
                         <p className="text-xs text-muted-foreground">Accepts: {bin.type}</p>
                       </div>
-                      <span className="text-sm font-semibold text-primary">{bin.distance}</span>
+                      <div className="flex items-center gap-1">
+                        {bin.distance !== "—" && <Navigation className="h-3 w-3 text-primary" />}
+                        <span className="text-sm font-semibold text-primary">{bin.distance}</span>
+                      </div>
                     </div>
                   ))}
                 </div>

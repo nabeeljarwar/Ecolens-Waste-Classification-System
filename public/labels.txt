@@ -1,7 +1,0 @@
-0: E_Waste
-
-1: Non_Recyclable
-
-2: Organic
-
-3: Recyclable

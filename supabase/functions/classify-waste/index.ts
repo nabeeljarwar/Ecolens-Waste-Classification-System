@@ -6,19 +6,6 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const HF_BASE = "https://jarwar786-ecolens.hf.space";
-
-function base64ToBlob(base64: string): Uint8Array {
-  // Remove data URL prefix if present
-  const b64 = base64.replace(/^data:image\/\w+;base64,/, "");
-  const binaryString = atob(b64);
-  const bytes = new Uint8Array(binaryString.length);
-  for (let i = 0; i < binaryString.length; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
-  }
-  return bytes;
-}
-
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -34,98 +21,117 @@ serve(async (req) => {
       );
     }
 
-    // Step 1: Convert base64 to binary and upload to Gradio
-    const imageBytes = base64ToBlob(image);
-    const formData = new FormData();
-    formData.append("files", new Blob([imageBytes], { type: "image/jpeg" }), "image.jpg");
-
-    const uploadRes = await fetch(`${HF_BASE}/upload`, {
-      method: "POST",
-      body: formData,
-    });
-
-    if (!uploadRes.ok) {
-      const errText = await uploadRes.text();
-      console.error("Upload failed:", uploadRes.status, errText);
-      return new Response(
-        JSON.stringify({ error: `Upload failed: ${uploadRes.status}` }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const uploadedFiles = await uploadRes.json();
-    console.log("Uploaded files:", JSON.stringify(uploadedFiles));
-
-    // uploadedFiles is an array of file paths like ["/tmp/gradio/xxx/image.jpg"]
-    const filePath = uploadedFiles[0];
-
-    // Step 2: Call predict with the uploaded file reference
-    const submitRes = await fetch(`${HF_BASE}/call/predict_waste`, {
+    // Use Lovable AI vision model to classify waste
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({
-        data: [{ path: filePath, meta: { _type: "gradio.FileData" } }],
+        model: "google/gemini-2.5-flash",
+        messages: [
+          {
+            role: "system",
+            content: `You are a waste classification expert. Classify the waste item in the image into exactly ONE of these 4 categories:
+- Recyclable (plastics, paper, cardboard, glass, metals, cans, bottles)
+- Non-Recyclable (styrofoam, mixed materials, contaminated items, certain plastics)
+- Organic (food waste, garden waste, biodegradable items, wood, leaves)
+- E-Waste (electronics, batteries, cables, circuit boards, phones, computers)
+
+You MUST respond using the suggest_classification tool.`
+          },
+          {
+            role: "user",
+            content: [
+              {
+                type: "image_url",
+                image_url: { url: image }
+              },
+              {
+                type: "text",
+                text: "Classify this waste item. What category does it belong to and how confident are you?"
+              }
+            ]
+          }
+        ],
+        tools: [
+          {
+            type: "function",
+            function: {
+              name: "suggest_classification",
+              description: "Return the waste classification result",
+              parameters: {
+                type: "object",
+                properties: {
+                  label: {
+                    type: "string",
+                    enum: ["Recyclable", "Non-Recyclable", "Organic", "E-Waste"],
+                    description: "The waste category"
+                  },
+                  confidence: {
+                    type: "number",
+                    description: "Confidence score between 0 and 1"
+                  }
+                },
+                required: ["label", "confidence"],
+                additionalProperties: false
+              }
+            }
+          }
+        ],
+        tool_choice: { type: "function", function: { name: "suggest_classification" } },
       }),
     });
 
-    if (!submitRes.ok) {
-      const errText = await submitRes.text();
-      console.error("Predict submit failed:", submitRes.status, errText);
-      return new Response(
-        JSON.stringify({ error: `Predict failed: ${submitRes.status}` }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const submitData = await submitRes.json();
-    const eventId = submitData.event_id;
-    console.log("Event ID:", eventId);
-
-    if (!eventId) {
-      return new Response(JSON.stringify(submitData), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Step 3: Poll for result
-    const resultRes = await fetch(`${HF_BASE}/call/predict_waste/${eventId}`);
-    if (!resultRes.ok) {
-      const errText = await resultRes.text();
-      console.error("Result fetch failed:", resultRes.status, errText);
-      return new Response(
-        JSON.stringify({ error: `Result error: ${resultRes.status}` }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Parse SSE response
-    const resultText = await resultRes.text();
-    console.log("SSE response:", resultText);
-    const lines = resultText.split("\n");
-    let resultData = null;
-
-    for (const line of lines) {
-      if (line.startsWith("data:")) {
-        const jsonStr = line.slice(5).trim();
-        try {
-          resultData = JSON.parse(jsonStr);
-        } catch {
-          // skip non-JSON data lines
-        }
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error("AI gateway error:", response.status, errText);
+      
+      if (response.status === 429) {
+        return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }), {
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
       }
-    }
-
-    if (!resultData) {
-      console.error("No valid data in SSE response:", resultText);
+      if (response.status === 402) {
+        return new Response(JSON.stringify({ error: "Service quota exceeded." }), {
+          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+      
       return new Response(
-        JSON.stringify({ error: "No result from ML model" }),
+        JSON.stringify({ error: "Classification failed" }),
         { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    return new Response(JSON.stringify(resultData), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    const aiResult = await response.json();
+    console.log("AI response:", JSON.stringify(aiResult));
+
+    // Extract tool call result
+    const toolCall = aiResult.choices?.[0]?.message?.tool_calls?.[0];
+    if (!toolCall?.function?.arguments) {
+      throw new Error("No classification result from AI");
+    }
+
+    const classification = JSON.parse(toolCall.function.arguments);
+
+    // Return in the format the frontend expects
+    return new Response(
+      JSON.stringify({
+        data: [{
+          label: classification.label,
+          confidences: [{ confidence: classification.confidence }]
+        }]
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+
   } catch (e) {
     console.error("classify-waste error:", e);
     return new Response(

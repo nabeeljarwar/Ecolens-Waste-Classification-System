@@ -1,9 +1,6 @@
-// AI Classification Service — connected to local TFLite model via MediaPipe
+// AI Classification Service — connected to real ML model
 
-import { ImageClassifier, FilesetResolver } from '@mediapipe/tasks-vision';
-
-let imageClassifier: ImageClassifier | null = null;
-let labels: string[] = [];
+import { supabase } from "@/integrations/supabase/client";
 
 export type WasteCategory = "recyclable" | "non-recyclable" | "organic" | "e-waste";
 
@@ -113,105 +110,47 @@ const wasteData: Record<WasteCategory, Omit<ClassificationResult, "confidence">>
   },
 };
 
-// Load TFLite model and labels
-const loadModel = async () => {
-  if (imageClassifier) return; // Already loaded
-
-  try {
-    // Initialize MediaPipe vision tasks
-    const vision = await FilesetResolver.forVisionTasks(
-      'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.8/wasm'
-    );
-
-    // Create ImageClassifier with the TFLite model
-    imageClassifier = await ImageClassifier.create(vision, {
-      baseOptions: {
-        modelAssetPath: '/ecolens_model.tflite',
-      },
-      runningMode: 'IMAGE',
-      maxResults: 5,
-    });
-
-    // Load labels
-    const response = await fetch('/labels.txt');
-    const text = await response.text();
-    labels = text.trim().split('\n').map(line => {
-      const [index, label] = line.split(': ');
-      return label ? label.replace(/_/g, ' ') : line; // Replace underscores with spaces
-    });
-
-    console.log('MediaPipe model and labels loaded successfully', labels);
-  } catch (error) {
-    console.error('Failed to load model:', error);
-    throw error;
-  }
-};
-
 // Map ML model labels to our internal categories
 const labelToCategory: Record<string, WasteCategory> = {
   "Recyclable": "recyclable",
   "recyclable": "recyclable",
   "Non-Recyclable": "non-recyclable",
   "non-recyclable": "non-recyclable",
-  "Non Recyclable": "non-recyclable",
   "Organic": "organic",
   "organic": "organic",
   "E-waste": "e-waste",
   "e-waste": "e-waste",
-  "E Waste": "e-waste",
-  "EWaste": "e-waste",
+  "E-Waste": "e-waste",
 };
 
 export const classifyWaste = async (imageBase64: string): Promise<ClassificationResult> => {
-  // Load model if not already loaded
-  await loadModel();
+  const { data, error } = await supabase.functions.invoke("classify-waste", {
+    body: { image: imageBase64 },
+  });
 
-  if (!imageClassifier) {
-    throw new Error('Model not loaded');
+  if (error) {
+    throw new Error(`Classification failed: ${error.message}`);
   }
 
-  try {
-    // Create image element from base64
-    const img = await loadImageFromBase64(imageBase64);
+  console.log("ML response:", JSON.stringify(data));
 
-    // Run inference using MediaPipe
-    const result = imageClassifier.classify(img as HTMLImageElement);
-
-    // Get the top prediction
-    const classifications = result.classifications[0]?.categories || [];
-    
-    if (classifications.length === 0) {
-      throw new Error('No predictions returned from model');
-    }
-
-    // Get the highest confidence prediction
-    const topPrediction = classifications[0];
-    const predictedLabel = topPrediction.categoryName || 'Non Recyclable';
-    const confidence = topPrediction.score || 0;
-
-    console.log('Prediction:', predictedLabel, 'Confidence:', confidence);
-
-    const category = labelToCategory[predictedLabel] || "non-recyclable";
-
-    return {
-      ...wasteData[category],
-      confidence: parseFloat(confidence.toFixed(2)),
-    };
-  } catch (error) {
-    console.error('Classification error:', error);
-    throw new Error(`Classification failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  // Handle both Gradio response formats:
+  // New format: { data: [{ label, confidences }] }
+  // Direct format: [{ label, confidences }]
+  const prediction = data?.data?.[0] ?? (Array.isArray(data) ? data[0] : null);
+  if (!prediction?.label) {
+    throw new Error("Invalid response from classification model");
   }
-};
 
-// Helper function to load image from base64
-const loadImageFromBase64 = (base64: string): HTMLImageElement => {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error('Failed to load image'));
-    img.crossOrigin = 'anonymous';
-    img.src = base64;
-  }) as unknown as HTMLImageElement;
+  const topLabel: string = prediction.label;
+  const topConfidence: number = prediction.confidences?.[0]?.confidence ?? 0.85;
+
+  const category = labelToCategory[topLabel] || "non-recyclable";
+
+  return {
+    ...wasteData[category],
+    confidence: parseFloat(topConfidence.toFixed(2)),
+  };
 };
 
 // Helper to get waste data for a specific category
