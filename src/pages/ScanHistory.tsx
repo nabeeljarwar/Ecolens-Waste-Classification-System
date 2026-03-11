@@ -15,6 +15,7 @@ interface ScanRecord {
   points_earned: number;
   disposed: boolean;
   created_at: string;
+  image_url: string | null;
 }
 
 const binColorMap: Record<string, string> = {
@@ -98,8 +99,12 @@ const ScanHistory = () => {
                 transition={{ delay: index * 0.05 }}
                 className="glass-card flex items-center gap-4 rounded-xl p-4"
               >
-                <div className={`h-10 w-10 rounded-xl ${binColorMap[scan.bin_color || ""] || "bg-muted"} flex items-center justify-center`}>
-                  <span className="text-lg">♻️</span>
+                <div className={`h-10 w-10 rounded-xl overflow-hidden ${scan.image_url ? '' : (binColorMap[scan.bin_color || ""] || "bg-muted")} flex items-center justify-center`}>
+                  {scan.image_url ? (
+                    <img src={scan.image_url} alt={scan.category} className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="text-lg">♻️</span>
+                  )}
                 </div>
                 <div className="flex-1">
                   <p className="font-medium text-foreground capitalize">{scan.category}</p>

@@ -82,7 +82,7 @@ export const MockCamera = ({ isOpen, onClose }: MockCameraProps) => {
 
     try {
       const result = await classifyWaste(capturedImage);
-      navigate("/scan/result", { state: { classification: result } });
+      navigate("/scan/result", { state: { classification: result, capturedImage } });
     } catch (e) {
       console.error("Classification error:", e);
       toast.error(e instanceof Error ? e.message : "Classification failed. Please try again.");

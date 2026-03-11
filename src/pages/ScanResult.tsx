@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, MapPin, Home as HomeIcon, FileText, Info, Navigation, Loader2 } from "lucide-react";
+import { ArrowLeft, MapPin, Home as HomeIcon, FileText, Navigation, Loader2 } from "lucide-react";
 import { WasteAnimation } from "@/components/WasteAnimation";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,9 +23,9 @@ const ScanResult = () => {
   const { user } = useAuth();
   const { latitude, longitude, error: geoError, loading: geoLoading } = useGeolocation();
   const classification = location.state?.classification as ClassificationResult | undefined;
+  const capturedImage = location.state?.capturedImage as string | undefined;
   const [saving, setSaving] = useState(false);
 
-  // Fallback if navigated directly
   const info = classification || getWasteInfo("recyclable");
   const confidence = classification?.confidence || 0.85;
 
@@ -45,9 +45,74 @@ const ScanResult = () => {
       .sort((a, b) => a.rawDist - b.rawDist);
   }, [latitude, longitude, info.binLabel]);
 
+  const handleSave = async () => {
+    if (!user) {
+      toast.error("Please log in first");
+      return;
+    }
+    setSaving(true);
+
+    let imageUrl: string | null = null;
+
+    // Upload captured image to storage
+    if (capturedImage) {
+      try {
+        const base64Data = capturedImage.split(",")[1];
+        const byteArray = Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0));
+        const fileName = `${user.id}/${Date.now()}.jpg`;
+        const { error: uploadError } = await supabase.storage
+          .from("scan-images")
+          .upload(fileName, byteArray, { contentType: "image/jpeg" });
+        if (!uploadError) {
+          const { data: urlData } = supabase.storage.from("scan-images").getPublicUrl(fileName);
+          imageUrl = urlData.publicUrl;
+        }
+      } catch (e) {
+        console.error("Image upload failed:", e);
+      }
+    }
+
+    // Insert scan record
+    const { error } = await supabase.from("scan_history").insert({
+      user_id: user.id,
+      category: info.category,
+      bin_color: info.binColor,
+      disposed: false,
+      points_earned: 10,
+      image_url: imageUrl,
+    });
+
+    if (error) {
+      toast.error("Failed to save scan");
+      console.error(error);
+      setSaving(false);
+      return;
+    }
+
+    // Update profile points and scan count
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("total_points, total_scans")
+      .eq("id", user.id)
+      .single();
+
+    if (profile) {
+      await supabase
+        .from("profiles")
+        .update({
+          total_points: profile.total_points + 10,
+          total_scans: profile.total_scans + 1,
+        })
+        .eq("id", user.id);
+    }
+
+    setSaving(false);
+    toast.success("+10 points earned! Added to pending disposals.");
+    navigate("/disposal");
+  };
+
   return (
     <div className="min-h-screen bg-background pb-8">
-      {/* Header */}
       <header className="relative overflow-hidden px-4 pb-6 pt-12">
         <motion.button
           initial={{ opacity: 0, x: -20 }}
@@ -140,7 +205,6 @@ const ScanResult = () => {
         >
           <h3 className="mb-3 text-lg font-semibold text-foreground">More Information</h3>
           <Accordion type="single" collapsible className="space-y-3">
-            {/* Nearby Bins */}
             <AccordionItem value="nearby-bins" className="glass-card overflow-hidden rounded-2xl border-0">
               <AccordionTrigger className="px-4 py-4 hover:no-underline [&[data-state=open]>svg]:rotate-180">
                 <div className="flex items-center gap-3">
@@ -182,7 +246,6 @@ const ScanResult = () => {
               </AccordionContent>
             </AccordionItem>
 
-            {/* Home Disposal Tips */}
             <AccordionItem value="home-tips" className="glass-card overflow-hidden rounded-2xl border-0">
               <AccordionTrigger className="px-4 py-4 hover:no-underline [&[data-state=open]>svg]:rotate-180">
                 <div className="flex items-center gap-3">
@@ -206,7 +269,6 @@ const ScanResult = () => {
               </AccordionContent>
             </AccordionItem>
 
-            {/* Government Guidelines */}
             <AccordionItem value="govt-guidelines" className="glass-card overflow-hidden rounded-2xl border-0">
               <AccordionTrigger className="px-4 py-4 hover:no-underline [&[data-state=open]>svg]:rotate-180">
                 <div className="flex items-center gap-3">
@@ -240,28 +302,7 @@ const ScanResult = () => {
           className="mt-6 space-y-3"
         >
           <Button
-            onClick={async () => {
-              if (!user) {
-                toast.error("Please log in first");
-                return;
-              }
-              setSaving(true);
-              const { error } = await supabase.from("scan_history").insert({
-                user_id: user.id,
-                category: info.category,
-                bin_color: info.binColor,
-                disposed: false,
-                points_earned: 10,
-              });
-              setSaving(false);
-              if (error) {
-                toast.error("Failed to save scan");
-                console.error(error);
-              } else {
-                toast.success("Added to pending disposals!");
-                navigate("/disposal");
-              }
-            }}
+            onClick={handleSave}
             disabled={saving}
             className="w-full gap-2 rounded-2xl bg-primary py-6 text-primary-foreground hover:bg-primary/90"
           >

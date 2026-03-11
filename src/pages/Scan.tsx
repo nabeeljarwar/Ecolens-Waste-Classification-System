@@ -27,26 +27,27 @@ const Scan = () => {
   const [cameraOpen, setCameraOpen] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [recentScans, setRecentScans] = useState<{ category: string; time: string; icon: string; color: string }[]>([]);
+  const [recentScans, setRecentScans] = useState<{ category: string; time: string; icon: string; color: string; imageUrl: string | null }[]>([]);
 
   useEffect(() => {
     if (!user) return;
     supabase
       .from("scan_history")
-      .select("category, created_at")
+      .select("category, created_at, image_url")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(4)
       .then(({ data }) => {
         if (data) {
           setRecentScans(
-            data.map((s) => {
+            data.map((s: any) => {
               const meta = categoryMeta[s.category] || { icon: "🗑️", color: "#6B7280" };
               return {
                 category: s.category.charAt(0).toUpperCase() + s.category.slice(1),
                 time: formatDistanceToNow(new Date(s.created_at), { addSuffix: true }),
                 icon: meta.icon,
                 color: meta.color,
+                imageUrl: s.image_url || null,
               };
             })
           );
@@ -216,8 +217,12 @@ const Scan = () => {
                 transition={{ duration: 0.4, delay: 0.7 + index * 0.1 }}
                 className="glass-card flex items-center gap-4 rounded-xl p-4"
               >
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted text-2xl">
-                  {scan.icon}
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted overflow-hidden">
+                  {scan.imageUrl ? (
+                    <img src={scan.imageUrl} alt={scan.category} className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="text-2xl">{scan.icon}</span>
+                  )}
                 </div>
                 <div className="flex-1">
                   <p className="font-medium text-foreground">{scan.category}</p>

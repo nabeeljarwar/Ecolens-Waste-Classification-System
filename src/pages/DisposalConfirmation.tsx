@@ -14,6 +14,7 @@ interface PendingItem {
   category: WasteCategory;
   scannedAt: string;
   status: "pending" | "uploading" | "submitted";
+  imageUrl: string | null;
 }
 
 const categoryDisplay: Record<WasteCategory, { icon: typeof Recycle; colorClass: string; label: string }> = {
@@ -34,18 +35,19 @@ const DisposalConfirmation = () => {
     if (!user) return;
     supabase
       .from("scan_history")
-      .select("id, category, created_at")
+      .select("id, category, created_at, image_url")
       .eq("user_id", user.id)
       .eq("disposed", false)
       .order("created_at", { ascending: false })
       .then(({ data }) => {
         if (data) {
           setItems(
-            data.map((s) => ({
+            data.map((s: any) => ({
               id: s.id,
               category: s.category as WasteCategory,
               scannedAt: formatDistanceToNow(new Date(s.created_at), { addSuffix: true }),
               status: "pending" as const,
+              imageUrl: s.image_url || null,
             }))
           );
         }
@@ -155,8 +157,12 @@ const DisposalConfirmation = () => {
                     >
                       <div className="p-4">
                         <div className="flex items-center gap-4">
-                          <div className={`flex h-14 w-14 items-center justify-center rounded-xl ${display.colorClass.split(" ")[1]}`}>
-                            <IconComp className={`h-7 w-7 ${display.colorClass.split(" ")[0]}`} />
+                          <div className={`flex h-14 w-14 items-center justify-center rounded-xl overflow-hidden ${item.imageUrl ? '' : display.colorClass.split(" ")[1]}`}>
+                            {item.imageUrl ? (
+                              <img src={item.imageUrl} alt={display.label} className="h-full w-full object-cover" />
+                            ) : (
+                              <IconComp className={`h-7 w-7 ${display.colorClass.split(" ")[0]}`} />
+                            )}
                           </div>
                           <div className="flex-1">
                             <h3 className="font-semibold text-foreground">{display.label}</h3>

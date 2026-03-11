@@ -54,6 +54,7 @@ export type Database = {
           created_at: string
           disposed: boolean
           id: string
+          image_url: string | null
           points_earned: number
           user_id: string
         }
@@ -63,6 +64,7 @@ export type Database = {
           created_at?: string
           disposed?: boolean
           id?: string
+          image_url?: string | null
           points_earned?: number
           user_id: string
         }
@@ -72,6 +74,7 @@ export type Database = {
           created_at?: string
           disposed?: boolean
           id?: string
+          image_url?: string | null
           points_earned?: number
           user_id?: string
         }
