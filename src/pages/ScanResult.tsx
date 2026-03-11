@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, MapPin, Home as HomeIcon, FileText, Info, Navigation, Loader2 } from "lucide-react";
@@ -13,12 +13,17 @@ import {
 import { ClassificationResult, getWasteInfo } from "@/services/classificationService";
 import { useGeolocation, calculateDistance } from "@/hooks/useGeolocation";
 import { muetBinLocations } from "@/data/muetLocations";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const ScanResult = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { latitude, longitude, error: geoError, loading: geoLoading } = useGeolocation();
   const classification = location.state?.classification as ClassificationResult | undefined;
+  const [saving, setSaving] = useState(false);
 
   // Fallback if navigated directly
   const info = classification || getWasteInfo("recyclable");
@@ -235,10 +240,39 @@ const ScanResult = () => {
           className="mt-6 space-y-3"
         >
           <Button
-            onClick={() => navigate("/disposal")}
+            onClick={async () => {
+              if (!user) {
+                toast.error("Please log in first");
+                return;
+              }
+              setSaving(true);
+              const { error } = await supabase.from("scan_history").insert({
+                user_id: user.id,
+                category: info.category,
+                bin_color: info.binColor,
+                disposed: false,
+                points_earned: 10,
+              });
+              setSaving(false);
+              if (error) {
+                toast.error("Failed to save scan");
+                console.error(error);
+              } else {
+                toast.success("Added to pending disposals!");
+                navigate("/disposal");
+              }
+            }}
+            disabled={saving}
             className="w-full gap-2 rounded-2xl bg-primary py-6 text-primary-foreground hover:bg-primary/90"
           >
-            Add to Pending Disposals
+            {saving ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              "Add to Pending Disposals"
+            )}
           </Button>
           <Button
             variant="outline"
