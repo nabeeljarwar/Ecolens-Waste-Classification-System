@@ -32,42 +32,30 @@ cd <YOUR_PROJECT_NAME>
 # Step 3: Install the necessary dependencies.
 npm i
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+# 🌿 EcoLens - Smart AI Waste Classifier
 
-**Edit a file directly in GitHub**
+**EcoLens** is an AI-powered web application designed to revolutionize waste management by providing instant classification. Built for sustainability, it helps users categorize waste into Recyclable, Organic, E-waste, and Non-Recyclable using on-device machine learning.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
 
-**Use GitHub Codespaces**
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## 🚀 The Problem & Our Solution
+In many cities like Hyderabad, improper waste disposal leads to environmental degradation. **EcoLens** solves this by providing:
+- **Instant AI Detection:** No more confusion about which bin to use.
+- **Edge Computing:** AI runs directly in your browser (no expensive server costs).
+- **Eco-Rewards:** Track your impact and earn points for a greener planet.
 
-## What technologies are used for this project?
+## 🛠 Tech Stack
+- **Frontend:** React.js + Vite + Tailwind CSS
+- **AI/ML:** TensorFlow.js + Custom TFLite Model (MobileNetV2)
+- **Database/Auth:** Supabase (BaaS)
+- **Deployment:** Vercel
 
-This project is built with:
+## 🌟 Key Features
+- **Client-Side Inference:** The AI model runs on the user's device, ensuring 100% privacy and lightning-fast results without high-speed internet requirements.
+- **Disposal Guide:** Specific instructions for each waste type (e.g., Green Bin for Organic).
+- **History Tracking:** Log your scans and see your total CO2 saved.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+## ⚙️ Local Setup
+1. Clone the repo:
+   ```bash
+   git clone [https://github.com/nabeeljarwar/Ecolens-Waste-Classification-System.git](https://github.com/nabeeljarwar/Ecolens-Waste-Classification-System.git)
