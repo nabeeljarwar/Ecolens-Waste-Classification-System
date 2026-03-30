@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Upload, Clock, Check, Video, Trash2, Recycle, Leaf, Cpu, XCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -30,6 +31,8 @@ const DisposalConfirmation = () => {
   const [items, setItems] = useState<PendingItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const pendingUploadId = useRef<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -55,22 +58,59 @@ const DisposalConfirmation = () => {
       });
   }, [user]);
 
-  const handleUpload = (id: string) => {
+  const handleUploadClick = (id: string) => {
+    pendingUploadId.current = id;
+    fileInputRef.current?.click();
+  };
+
+  const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    const id = pendingUploadId.current;
+    if (!file || !id || !user) return;
+
+    // Reset input so same file can be re-selected
+    e.target.value = "";
+
     setUploadingId(id);
     setItems((prev) =>
       prev.map((item) => (item.id === id ? { ...item, status: "uploading" } : item))
     );
-    // Simulate upload, then mark as disposed in DB
-    setTimeout(async () => {
-      await supabase
-        .from("scan_history")
-        .update({ disposed: true })
-        .eq("id", id);
+
+    try {
+      // Upload proof file to storage
+      const ext = file.name.split(".").pop() || "mp4";
+      const path = `${user.id}/disposal-${id}.${ext}`;
+      await supabase.storage.from("scan-images").upload(path, file, { upsert: true });
+
+      // Mark as disposed + award points
+      await supabase.from("scan_history").update({ disposed: true }).eq("id", id);
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("total_points")
+        .eq("id", user.id)
+        .single();
+
+      if (profile) {
+        await supabase
+          .from("profiles")
+          .update({ total_points: profile.total_points + 25 })
+          .eq("id", user.id);
+      }
+
       setItems((prev) =>
         prev.map((item) => (item.id === id ? { ...item, status: "submitted" } : item))
       );
+      toast.success("Disposal verified! +25 points earned");
+    } catch {
+      setItems((prev) =>
+        prev.map((item) => (item.id === id ? { ...item, status: "pending" } : item))
+      );
+      toast.error("Upload failed, please try again");
+    } finally {
       setUploadingId(null);
-    }, 3000);
+      pendingUploadId.current = null;
+    }
   };
 
   const pendingCount = items.filter((i) => i.status === "pending").length;
@@ -78,6 +118,14 @@ const DisposalConfirmation = () => {
 
   return (
     <div className="min-h-screen bg-background pb-8">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*,video/*"
+        capture="environment"
+        className="hidden"
+        onChange={handleFileSelected}
+      />
       <header className="relative overflow-hidden bg-gradient-to-br from-primary via-eco-forest to-eco-forest-dark px-4 pb-8 pt-12">
         <motion.button
           initial={{ opacity: 0, x: -20 }}
@@ -179,7 +227,7 @@ const DisposalConfirmation = () => {
 
                         {item.status === "pending" && (
                           <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="mt-4">
-                            <Button onClick={() => handleUpload(item.id)} className="w-full gap-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90">
+                            <Button onClick={() => handleUploadClick(item.id)} disabled={!!uploadingId} className="w-full gap-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90">
                               <Upload className="h-4 w-4" />
                               Upload Video Proof
                             </Button>

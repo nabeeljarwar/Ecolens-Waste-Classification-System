@@ -1,37 +1,73 @@
-# 🌿 EcoLens: AI-Powered Smart Campus Initiative
-### *Driving Sustainability at MUET Jamshoro through Edge Intelligence*
+# Welcome to your Lovable project
 
-**EcoLens** is a sophisticated AI-driven application developed to facilitate the transition of MUET Jamshoro into a "Zero-Waste" Smart Campus. By utilizing on-device Machine Learning, EcoLens provides students and faculty with real-time waste classification and directs them to the nearest specialized disposal units across the campus.
+## Project info
 
+**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
 
+## How can I edit this code?
 
----
+There are several ways of editing your application.
 
-## 🎯 The Vision: A Smarter, Greener MUET
-MUET Jamshoro features a sprawling campus with diverse waste generation points. EcoLens addresses the challenges of waste segregation with a decentralized technical approach:
-- **Zero-Latency Classification:** AI inference is performed locally in the browser, removing the dependency on high-bandwidth campus Wi-Fi for server-side processing.
-- **Strategic Campus Mapping:** Integrated guidance system for smart bins located at key MUET landmarks, including the Central Library and the Student Cafeteria.
-- **Inclusive Edge AI:** Specifically optimized to run on hardware-constrained devices (e.g., 4GB RAM), ensuring accessibility for the entire MUET community.
+**Use Lovable**
 
----
+Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
 
-## 🛠 Tech Stack
-- **Frontend:** React.js + Vite + Tailwind CSS
-- **AI/ML:** TensorFlow.js + Custom TFLite Model (MobileNetV2)
-- **Database/Auth:** Supabase (BaaS)
-- **Deployment:** Vercel
+Changes made via Lovable will be committed automatically to this repo.
 
-## 🌟 Technical Highlights for Hackathon Judges
-1. **Edge Computing Architecture:** By performing browser-side inference, the system ensures 100% data privacy and achieves a $0 operational cost for server-side GPU resources.
-2. **Resource Optimization:** Despite being developed on mid-tier hardware, the application maintains high performance through strategic CDN utilization and deferred loading of heavy ML assets.
-3. **Data-Driven Sustainability:** Every successful classification is logged in the MUET sustainability dashboard (via Supabase), enabling the collection of campus-wide recycling analytics.
+**Use your preferred IDE**
 
----
+If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
 
-## 🚀 Future Roadmap
-- **IoT Smart Bin Integration:** Connecting physical bin sensors to the dashboard for real-time fill-level monitoring.
-- **Departmental Leaderboards:** Gamifying sustainability to foster healthy competition between Engineering Departments (CS, EE, ME, etc.).
-- **PWA Implementation:** Enhancing offline capabilities to ensure classification remains functional regardless of campus connectivity.
+The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
 
----
-**Developed with a commitment to MUET Jamshoro's sustainable future.**
+Follow these steps:
+
+```sh
+# Step 1: Clone the repository using the project's Git URL.
+git clone <YOUR_GIT_URL>
+
+# Step 2: Navigate to the project directory.
+cd <YOUR_PROJECT_NAME>
+
+# Step 3: Install the necessary dependencies.
+npm i
+
+# Step 4: Start the development server with auto-reloading and an instant preview.
+npm run dev
+```
+
+**Edit a file directly in GitHub**
+
+- Navigate to the desired file(s).
+- Click the "Edit" button (pencil icon) at the top right of the file view.
+- Make your changes and commit the changes.
+
+**Use GitHub Codespaces**
+
+- Navigate to the main page of your repository.
+- Click on the "Code" button (green button) near the top right.
+- Select the "Codespaces" tab.
+- Click on "New codespace" to launch a new Codespace environment.
+- Edit files directly within the Codespace and commit and push your changes once you're done.
+
+## What technologies are used for this project?
+
+This project is built with:
+
+- Vite
+- TypeScript
+- React
+- shadcn-ui
+- Tailwind CSS
+
+## How can I deploy this project?
+
+Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+
+## Can I connect a custom domain to my Lovable project?
+
+Yes, you can!
+
+To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+
+Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
