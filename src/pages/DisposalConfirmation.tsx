@@ -82,26 +82,13 @@ const DisposalConfirmation = () => {
       const path = `${user.id}/disposal-${id}.${ext}`;
       await supabase.storage.from("scan-images").upload(path, file, { upsert: true });
 
-      // Mark as disposed + award points
-      await supabase.from("scan_history").update({ disposed: true }).eq("id", id);
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("total_points")
-        .eq("id", user.id)
-        .single();
-
-      if (profile) {
-        await supabase
-          .from("profiles")
-          .update({ total_points: profile.total_points + 25 })
-          .eq("id", user.id);
-      }
+      // Submit for admin review (points awarded after admin approval)
+      await supabase.from("scan_history").update({ verification_status: "pending" }).eq("id", id);
 
       setItems((prev) =>
         prev.map((item) => (item.id === id ? { ...item, status: "submitted" } : item))
       );
-      toast.success("Disposal verified! +25 points earned");
+      toast.success("Proof submitted! Awaiting admin verification for points.");
     } catch {
       setItems((prev) =>
         prev.map((item) => (item.id === id ? { ...item, status: "pending" } : item))

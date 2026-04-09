@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { AdminRoute } from "@/components/AdminRoute";
 import Home from "./pages/Home";
 import Scan from "./pages/Scan";
 import ScanResult from "./pages/ScanResult";
@@ -15,6 +16,13 @@ import DisposalConfirmation from "./pages/DisposalConfirmation";
 import ScanHistory from "./pages/ScanHistory";
 import Rewards from "./pages/Rewards";
 import Settings from "./pages/Settings";
+import EcoReport from "./pages/EcoReport";
+import PlantChallenge from "./pages/PlantChallenge";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminDisposals from "./pages/admin/AdminDisposals";
+import AdminReports from "./pages/admin/AdminReports";
+import AdminChallenges from "./pages/admin/AdminChallenges";
+import AdminUsers from "./pages/admin/AdminUsers";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +45,13 @@ const App = () => (
             <Route path="/scan-history" element={<ProtectedRoute><ScanHistory /></ProtectedRoute>} />
             <Route path="/rewards" element={<ProtectedRoute><Rewards /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+            <Route path="/eco-report" element={<ProtectedRoute><EcoReport /></ProtectedRoute>} />
+            <Route path="/plant-challenge" element={<ProtectedRoute><PlantChallenge /></ProtectedRoute>} />
+            <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+            <Route path="/admin/disposals" element={<AdminRoute><AdminDisposals /></AdminRoute>} />
+            <Route path="/admin/reports" element={<AdminRoute><AdminReports /></AdminRoute>} />
+            <Route path="/admin/challenges" element={<AdminRoute><AdminChallenges /></AdminRoute>} />
+            <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

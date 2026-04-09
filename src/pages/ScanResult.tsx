@@ -72,13 +72,13 @@ const ScanResult = () => {
       }
     }
 
-    // Insert scan record
+    // Insert scan record (no points until admin verification)
     const { error } = await supabase.from("scan_history").insert({
       user_id: user.id,
       category: info.category,
       bin_color: info.binColor,
       disposed: false,
-      points_earned: 10,
+      points_earned: 0,
       image_url: imageUrl,
     });
 
@@ -89,25 +89,22 @@ const ScanResult = () => {
       return;
     }
 
-    // Update profile points and scan count
+    // Update scan count only (points awarded after admin verification)
     const { data: profile } = await supabase
       .from("profiles")
-      .select("total_points, total_scans")
+      .select("total_scans")
       .eq("id", user.id)
       .single();
 
     if (profile) {
       await supabase
         .from("profiles")
-        .update({
-          total_points: profile.total_points + 10,
-          total_scans: profile.total_scans + 1,
-        })
+        .update({ total_scans: profile.total_scans + 1 })
         .eq("id", user.id);
     }
 
     setSaving(false);
-    toast.success("+10 points earned! Added to pending disposals.");
+    toast.success("Saved! Submit disposal proof for admin verification.");
     navigate("/disposal");
   };
 

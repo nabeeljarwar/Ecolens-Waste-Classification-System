@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
+
 const Home = () => {
   const { user } = useAuth();
   const [totalPoints, setTotalPoints] = useState(0);
@@ -61,7 +62,7 @@ const Home = () => {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="flex items-center gap-2"
+            className="flex items-center gap-3"
           >
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm">
               <Leaf className="h-5 w-5 text-white" />
@@ -107,10 +108,7 @@ const Home = () => {
           transition={{ duration: 0.5, delay: 0.3 }}
           className="mt-6"
         >
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-foreground">Eco Facts</h2>
-            <span className="text-xs text-muted-foreground">Auto-sliding</span>
-          </div>
+          <h2 className="mb-3 text-lg font-semibold text-foreground">Eco Facts</h2>
           <EcoCarousel />
         </motion.div>
 
